@@ -36,10 +36,11 @@ class NotificationsRepo():
         )
 
     def store_notification(self, title: str, start_time: str, end_time: str, source: str) -> None:
-        print(title)
-        print(start_time)
-        print(end_time)
-        print(source)
+        url = urllib.parse.urljoin(self.__base_url, 'notifications')
+        data = {'title': title, 'start_time': start_time, 'end_time': end_time, 'source': source}
+        r = requests.post(url, auth=self.__auth, json=data, timeout=5)
+        if r.status_code != 201:
+            raise ApiError(f"can not store notification {r.content}")
 
 
 class ApiError(BaseException):

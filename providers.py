@@ -69,13 +69,16 @@ class NJTransitProvider(Provider):
 
         notifs = self.__get_njt_notifications()
 
-        self._store_notification_if_missing(schedule_updates, notifs)
+        try:
+            self._store_notification_if_missing(schedule_updates, notifs)
+        except:
+            logging.exception('not able to store NJT notification')
 
     def _store_notification_if_missing(self, schedule_updates: list, notifs: list) -> None:
         title = f"{len(schedule_updates)} train(s) from " \
             f"{self.__station_codes.get(self.__orig_station_code, None).title()} " \
             f"to {self.__station_codes.get(self.__dest_station_code, None).title()} have modified schedule "
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().replace(microsecond=0)
         if len(notifs) == 0:
             log.debug('no NJTransit notification, storing one')
             self.__notifications_repo.store_notification(
