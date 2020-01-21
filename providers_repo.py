@@ -41,8 +41,8 @@ class ProvidersRepo():
                 njt_username=self.__njt_username,
                 njt_password=self.__njt_password,
                 provider_id=uuid.UUID(provider_data.get("_id")),
-                orig_station_code=provider_data['njtransit']['orig_station_id'],
-                dest_station_code=provider_data['njtransit']['dest_station_id'],
+                orig_station_code=provider_data['njtransit']['orig_station_code'],
+                dest_station_code=provider_data['njtransit']['dest_station_code'],
                 notifications_repo=self.__notifications_repo,
             )
         else:
