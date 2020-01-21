@@ -4,6 +4,8 @@ from typing import Optional, Dict
 import requests
 import xml.etree.ElementTree as xet
 import json
+from http import HTTPStatus
+import csv
 
 
 class Provider:
@@ -29,10 +31,9 @@ class NJTransitProvider(Provider):
         self.__origin_station_code = origin_station_code
         self.__destination_station_code = destination_station_code
 
+        # TODO should be for all NJT providers
         self.__delay_trigger_threshold_sec = 5 * 60
-
-        # TODO prepare map of two code station id to station normal name
-        # TODO define delay threshold
+        self.__station_codes = {}
 
     def update_notifications(self):
         # TODO query station schedule
@@ -49,7 +50,7 @@ class NJTransitProvider(Provider):
         res = []
         for train in station_schedule['ITEMS']['ITEM']:
             if train['STATUS'].strip().lower() != 'canceled' and \
-                    int(train['SEC_LATE']) < 0:#self.__delay_trigger_threshold_sec:
+                    int(train['SEC_LATE']) < self.__delay_trigger_threshold_sec:
                 continue
 
             origin_met = False
@@ -67,12 +68,17 @@ class NJTransitProvider(Provider):
         return res
 
     def _station_code_to_name(self, code: str) -> str:
-        if code == 'ST':
-            return 'Summit'.lower()
-        elif code == 'NY':
-            return 'New York Penn Station'.lower()
+        if not self.__station_codes:
+            self._update_station_codes()
 
-        return None
+        return self.__station_codes.get(code, None)
+
+    def _update_station_codes(self) -> None:
+        self.__station_codes = {}
+        with open('njt_stations.csv', 'r') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            for row in reader:
+                self.__station_codes[row[1]] = row[0].lower()
         
     def _get_train_schedule(self, station_code: str) -> dict:
         return requests.get(f"{NJTransitProvider.__njtransit_api_base_url}/getTrainScheduleJSON?" \
