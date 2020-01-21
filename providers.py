@@ -54,8 +54,13 @@ class NJTransitProvider(Provider):
         self.__notifications_repo = notifications_repo
 
     def update_notifications(self):
+        log.debug(f"querying notifications for {self.__orig_station_code}")
         raw_data = self._get_train_schedule(self.__orig_station_code)
-        station_schedule = NJTransitProvider._extract_json(raw_data.content)
+        try:
+            station_schedule = NJTransitProvider._extract_json(raw_data.content)
+        except:
+            logging.exception(f"not able to parse NJT response: {raw_data.content}")
+            return
 
         schedule_updates = self._filter_schedule_updates(station_schedule)
         if len(schedule_updates) == 0:
@@ -99,6 +104,9 @@ class NJTransitProvider(Provider):
         return [notif for notif in self.__notifications_repo.get_notifications(True) if notif.source == 'njtransit']
 
     def _filter_schedule_updates(self, station_schedule: dict) -> list:
+        if 'ITEMS' not in station_schedule or not station_schedule['ITEMS']:
+            return []
+
         res = []
         origin_station = self.__station_codes.get(self.__orig_station_code, None)
         dest_station = self.__station_codes.get(self.__dest_station_code, None)

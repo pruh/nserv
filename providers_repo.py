@@ -31,18 +31,18 @@ class ProvidersRepo():
             raise ApiError(f"failed to query for providers {response}")
 
         payload = json.loads(response.content.decode('utf-8'))
-        return tuple(self._to_provider(item, njt_username, njt_password) for item in payload)
+        return tuple(self._to_provider(item) for item in payload)
 
 
-    def _to_provider(provider_data: Dict[str, str]) -> Provider:
+    def _to_provider(self, provider_data: Dict[str, str]) -> Provider:
         proovider_type = provider_data.get("type")
         if 'NJTransit' == proovider_type:
             return NJTransitProvider(
                 njt_username=self.__njt_username,
                 njt_password=self.__njt_password,
                 provider_id=uuid.UUID(provider_data.get("_id")),
-                orig_station_code=provider_data.get("orig_station_code"),
-                dest_station_code=provider_data.get("dest_station_code"),
+                orig_station_code=provider_data['njtransit']['orig_station_id'],
+                dest_station_code=provider_data['njtransit']['dest_station_id'],
                 notifications_repo=self.__notifications_repo,
             )
         else:
