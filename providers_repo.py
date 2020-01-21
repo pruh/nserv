@@ -6,6 +6,7 @@ from requests.auth import HTTPBasicAuth
 from providers import Provider, NJTransitProvider
 import logging
 import uuid
+from notifications_repo import NotificationsRepo
 
 
 log = logging.getLogger(__name__)
@@ -14,13 +15,14 @@ log = logging.getLogger(__name__)
 class ProvidersRepo():
 
     def __init__(self, base_url: str, username: Optional[str], password: Optional[str],
-            njt_username: Optional[str], njt_password: Optional[str]):
+            njt_username: Optional[str], njt_password: Optional[str], notifications_repo: NotificationsRepo):
         self.__base_url = base_url
         self.__auth = None
         if username and password:
             self.__auth = HTTPBasicAuth(username=username, password=password)
         self.__njt_username = njt_username
         self.__njt_password = njt_password
+        self.__notifications_repo = notifications_repo
 
     def get_providers(self) -> Tuple[Provider, ...]:
         url = urllib.parse.urljoin(self.__base_url, 'providers')
@@ -39,8 +41,9 @@ class ProvidersRepo():
                 njt_username=self.__njt_username,
                 njt_password=self.__njt_password,
                 provider_id=uuid.UUID(provider_data.get("_id")),
-                origin_station_code=provider_data.get("origin_station_code"),
-                destination_station_code=provider_data.get("destination_station_code"),
+                orig_station_code=provider_data.get("orig_station_code"),
+                dest_station_code=provider_data.get("dest_station_code"),
+                notifications_repo=self.__notifications_repo,
             )
         else:
             log.debug(f"Unsupported provider type: {proovider_type}")
