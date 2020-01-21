@@ -7,12 +7,16 @@ import logging
 from providers_repo import ProvidersRepo
 from providers import NJTransitProvider
 from notifications_repo import NotificationsRepo
+from logger import setup_uncaught_exceptions_logger, setup_default_loggers
 
 
 log = logging.getLogger(__name__)
 
 
 def main():
+    setup_uncaught_exceptions_logger()
+    setup_default_loggers()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--api-base-url', action='store', type=str, help='API base URL', required=True)
     parser.add_argument('-a', '--username', action='store', type=str, help='HTTP basic auth username')

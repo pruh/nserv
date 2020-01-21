@@ -26,7 +26,7 @@ class ProvidersRepo():
 
     def get_providers(self) -> Tuple[Provider, ...]:
         url = urllib.parse.urljoin(self.__base_url, 'providers')
-        response = requests.get(url, auth=self.__auth)
+        response = requests.get(url, auth=self.__auth, timeout=5)
         if response.status_code != 200:
             raise ApiError(f"failed to query for providers {response}")
 

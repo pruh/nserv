@@ -16,7 +16,7 @@ class NotificationsRepo():
 
     def get_notifications(self, only_current: bool = True) -> Tuple[Notification, ...]:
         url = urllib.parse.urljoin(self.__base_url, 'notifications?only_current=false')
-        response = requests.get(url, auth=self.__auth)
+        response = requests.get(url, auth=self.__auth, timeout=5)
         if response.status_code != 200:
             raise ApiError(f"failed to query for notifications {response}")
 
@@ -33,7 +33,7 @@ class NotificationsRepo():
             source=notif_dict.get("source"),
         )
 
-    def store_notification(self, notif: Notification):
+    def store_notification(self, notif: Notification) -> None:
         pass
 
 
