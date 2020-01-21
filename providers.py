@@ -29,20 +29,50 @@ class NJTransitProvider(Provider):
         self.__origin_station_code = origin_station_code
         self.__destination_station_code = destination_station_code
 
+        self.__delay_trigger_threshold_sec = 5 * 60
+
         # TODO prepare map of two code station id to station normal name
         # TODO define delay threshold
 
     def update_notifications(self):
         # TODO query station schedule
-        station_schedule = self._get_train_schedule(self.__origin_station_code)
-        json_str = NJTransitProvider._extract_json(station_schedule.content)
-        print(json_str)
+        raw_data = self._get_train_schedule(self.__origin_station_code)
+        station_schedule = NJTransitProvider._extract_json(raw_data.content)
 
         # TODO filter by direction I need
-
-        # TODO look if there are any delayed (with threshold) or canceled trains
+        schedule_updates = self._filter_schedule_updates(station_schedule)
+        print(len(schedule_updates))
 
         # TODO query notifications
+
+    def _filter_schedule_updates(self, station_schedule: dict) -> list:
+        res = []
+        for train in station_schedule['ITEMS']['ITEM']:
+            if train['STATUS'].strip().lower() != 'canceled' and \
+                    int(train['SEC_LATE']) < 0:#self.__delay_trigger_threshold_sec:
+                continue
+
+            origin_met = False
+            origin_station = self._station_code_to_name(self.__origin_station_code)
+            dest_station = self._station_code_to_name(self.__destination_station_code)
+            for stop in train['STOPS']['STOP']:
+                if stop['NAME'].strip().lower() == origin_station:
+                    origin_met = True
+                if stop['NAME'].strip().lower() == dest_station:
+                    if origin_met:
+                        res.append(train)
+
+                    break
+
+        return res
+
+    def _station_code_to_name(self, code: str) -> str:
+        if code == 'ST':
+            return 'Summit'.lower()
+        elif code == 'NY':
+            return 'New York Penn Station'.lower()
+
+        return None
         
     def _get_train_schedule(self, station_code: str) -> dict:
         return requests.get(f"{NJTransitProvider.__njtransit_api_base_url}/getTrainScheduleJSON?" \
@@ -52,5 +82,4 @@ class NJTransitProvider(Provider):
     def _extract_json(cls, content: str):
         """Convert schedule from xml to json"""
         json_data = json.loads(xet.XML(content).text)
-        return json_data["STATION"]
-
+        return json_data['STATION']
