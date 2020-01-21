@@ -10,6 +10,7 @@ from notifications_repo import NotificationsRepo
 import logging
 from notification import Notification
 import datetime
+from dateutil.tz import tzlocal
 
 
 log = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ class NJTransitProvider(Provider):
         title = f"{len(schedule_updates)} train(s) from " \
             f"{self.__station_codes.get(self.__orig_station_code, None).title()} " \
             f"to {self.__station_codes.get(self.__dest_station_code, None).title()} have modified schedule "
-        now = datetime.datetime.now().replace(microsecond=0)
+        now = datetime.datetime.now(tzlocal()).replace(microsecond=0)
         if len(notifs) == 0:
             log.debug('no NJTransit notification, storing one')
             self.__notifications_repo.store_notification(
