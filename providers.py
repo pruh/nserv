@@ -9,7 +9,7 @@ import csv
 from notifications_repo import NotificationsRepo
 import logging
 from notification import Notification
-from datetime import datetime
+import datetime
 
 
 log = logging.getLogger(__name__)
@@ -67,24 +67,23 @@ class NJTransitProvider(Provider):
             log.debug('no schedule updates')
             return
 
-        notifs = self.__get_njt_notifications(title)
+        notifs = self.__get_njt_notifications()
 
-        self._store_notifications_if_missing(schedule_updates, notifs)
+        self._store_notification_if_missing(schedule_updates, notifs)
 
     def _store_notification_if_missing(self, schedule_updates: list, notifs: list) -> None:
         title = f"{len(schedule_updates)} train(s) from " \
-            f"{self.__station_codes.get(self.__orig_station_code, None)} " \
-            f"to {self.__station_codes.get(self.__dest_station_code, None)} have modified schedule "
-        
-        now = datetime.now()
+            f"{self.__station_codes.get(self.__orig_station_code, None).title()} " \
+            f"to {self.__station_codes.get(self.__dest_station_code, None).title()} have modified schedule "
+        now = datetime.datetime.now()
         if len(notifs) == 0:
             log.debug('no NJTransit notification, storing one')
-            self.__notifications_repo.store_notification(Notification(
+            self.__notifications_repo.store_notification(
                 title=title,
-                start_time=now,
-                end_time=now + datetime.timedelta(hours=1),
-                source=notif_dict.get(njtransit),
-            ))
+                start_time=now.isoformat(),
+                end_time=(now + datetime.timedelta(hours=1)).isoformat(),
+                source='njtransit',
+            )
             return
 
         for notif in notifs:
@@ -93,12 +92,12 @@ class NJTransitProvider(Provider):
                 break
         else:
             log.debug('no NJTransit notification with given title, storing one')
-            self.__notifications_repo.store_notification(Notification(
+            self.__notifications_repo.store_notification(
                 title=title,
-                start_time=now,
-                end_time=now + datetime.timedelta(hours=1),
-                source=notif_dict.get(njtransit),
-            ))
+                start_time=now.isoformat(),
+                end_time=(now + datetime.timedelta(hours=1)).isoformat(),
+                source='njtransit',
+            )
 
     def __get_njt_notifications(self) -> list:
         return [notif for notif in self.__notifications_repo.get_notifications(True) if notif.source == 'njtransit']
@@ -112,7 +111,7 @@ class NJTransitProvider(Provider):
         dest_station = self.__station_codes.get(self.__dest_station_code, None)
         for train in station_schedule['ITEMS']['ITEM']:
             if train['STATUS'].strip().lower() != 'canceled' and \
-                    int(train['SEC_LATE']) < self.__delay_trigger_threshold_sec:
+                    int(train['SEC_LATE']) < 0:#self.__delay_trigger_threshold_sec:
                 continue
 
             origin_met = False

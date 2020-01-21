@@ -4,6 +4,8 @@ from typing import Tuple, Optional, Dict
 import urllib.parse
 from requests.auth import HTTPBasicAuth
 from notification import Notification
+import uuid
+import dateutil.parser
 
 
 class NotificationsRepo():
@@ -33,8 +35,11 @@ class NotificationsRepo():
             source=notif_dict.get("source"),
         )
 
-    def store_notification(self, notif: Notification) -> None:
-        pass
+    def store_notification(self, title: str, start_time: str, end_time: str, source: str) -> None:
+        print(title)
+        print(start_time)
+        print(end_time)
+        print(source)
 
 
 class ApiError(BaseException):
