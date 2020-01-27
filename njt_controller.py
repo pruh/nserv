@@ -1,3 +1,4 @@
+import os
 import requests
 import logging
 import datetime
@@ -26,7 +27,7 @@ class NJTController(ProviderController):
 
     NJT_SOURCE = 'njtransit'
     API_BASE = 'http://traindata.njtransit.com:8092/NJTTrainData.asmx'
-    
+
     def __init__(self, njt_username: str, njt_password: str):
         self.__njt_username = njt_username
         self.__njt_password = njt_password
@@ -36,7 +37,9 @@ class NJTController(ProviderController):
 
     def _load_station_codes(self) -> dict:
         station_codes = {}
-        with open('njt_stations.csv', 'r') as csvfile:
+        script_dir = os.path.dirname(__file__)
+        filepath = os.path.join(script_dir, 'njt_stations.csv')
+        with open(filepath, 'r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             for row in reader:
                 station_codes[row[1]] = row[0].lower()
