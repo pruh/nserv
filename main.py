@@ -3,14 +3,11 @@
 import argparse
 import threading
 import time
-import logging
 from providers_repo import ProvidersRepo
-from providers import NJTransitProvider
 from notifications_repo import NotificationsRepo
+from controller import Controller
+from njt_controller import NJTController
 from logger import setup_uncaught_exceptions_logger, setup_default_loggers
-
-
-log = logging.getLogger(__name__)
 
 
 def main():
@@ -25,32 +22,20 @@ def main():
     parser.add_argument('--njt-password', action='store', type=str, help='Password to access NJT API')
     args = parser.parse_args()
 
+    providers_repo = ProvidersRepo(base_url=args.api_base_url, username=args.username, password=args.password)
     notifications_repo = NotificationsRepo(base_url=args.api_base_url, username=args.username, password=args.password)
-    repo = ProvidersRepo(base_url=args.api_base_url, username=args.username, password=args.password,
-            njt_username=args.njt_username, njt_password=args.njt_password, notifications_repo=notifications_repo)
-    thread = threading.Thread(target=_run_bg_jobs, args=(repo,notifications_repo,))
+    njt_controller = NJTController(njt_username=args.njt_username, njt_password=args.njt_password)
+    controller = Controller(providers_repo=providers_repo, notifs_repo=notifications_repo, \
+        njt_controller=njt_controller)
+    thread = threading.Thread(target=_run_bg_jobs, args=(controller,))
     thread.start()
 
 
-def _run_bg_jobs(repo: ProvidersRepo, notifications_repo: NotificationsRepo) -> None:
+def _run_bg_jobs(controller: Controller) -> None:
     while True:
-        _execute_notification_providers(repo, notifications_repo)
+        controller.run()
 
-        # TODO increase timeout
-        time.sleep(5)
-
-
-def _execute_notification_providers(repo: ProvidersRepo, notifications_repo: NotificationsRepo):
-    try:
-        providers = repo.get_providers()
-    except:
-        logging.exception('failed to query for providers')
-        return
-
-    log.debug(f"queried providers: {providers}")
-
-    for provider in providers:
-        provider.update_notifications()
+        time.sleep(5 * 60)
 
 
 if __name__ == '__main__':

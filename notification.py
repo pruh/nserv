@@ -8,9 +8,9 @@ class Notification:
     Data class to describe notification.
     """
 
-    def __init__(self, id: uuid, title: str, message: Optional[str],
+    def __init__(self, notif_id: uuid, title: str, message: Optional[str],
             start_time: datetime, end_time: datetime, source: Optional[str]):
-        self.id = id
+        self.notif_id = notif_id
         self.title = title
         self.message = message
         self.start_time = start_time
